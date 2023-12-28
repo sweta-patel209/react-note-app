@@ -8,180 +8,151 @@ const AddEditNotes = (props: any) => {
     title: string;
     content: string;
   };
-  const [count, setCount] = useState(-1);
+
   const [isDisabled, setisDisabled] = useState(true);
-  const [notes, setNotes] = useState<Note[]>([
-    // {
-    //   id: 1,
-    //   title: "note title 1",
-    //   content: "note one is here",
-    // },
-    // {
-    //   id: 2,
-    //   title: "note title 2",
-    //   content: "note two is here",
-    // },
-    // {
-    //   id: 3,
-    //   title: "note title 3",
-    //   content: "note three is here",
-    // },
-    // {
-    //   id: 4,
-    //   title: "note title 4",
-    //   content: "note 4 is here",
-    // },
-  ]);
+  const [notes, setNotes] = useState<Note[]>([]);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
-  const [error, setError] = useState("")
+  const [error, setError] = useState("");
+
+  //   useEffect(() => {
+  //     setCount(count + 1);
+  //     console.log(count);
+  //   }, []);
 
   useEffect(() => {
-    setCount(count + 1);
-    console.log(count)
-  }
- , []);
-
-  useEffect(()=>{   
     fetchNotes();
-  },[])
+  }, []);
 
   const fetchNotes = async () => {
     try {
-        const response = await fetch("http://localhost:5000/api/notes/getallnotes");
-        const noteList = await response.json();
-        const notes:Note[] = noteList.data;
-        setNotes(notes);
-
-        console.log(notes,notes.length)
+      const response = await fetch(
+        "http://localhost:5000/api/notes/getallnotes"
+      );
+      const noteList = await response.json();
+      const notes: Note[] = noteList.data;
+      setNotes(notes);
     } catch (error) {
-        console.log(error);
+      console.log(error);
     }
-};
+  };
 
   const handleNoteClick = (note: Note) => {
-    console.log(note)
     setSelectedNote(note);
     setTitle(note.title);
     setContent(note.content);
-    console.log(selectedNote)
   };
 
   const handleUpdateNote = async (e: React.FormEvent) => {
     e.preventDefault();
-   
 
     if (!selectedNote) {
       return;
     }
 
-    if(title == '' || content == '' ){
-        setError("Please enter required details");
-        setisDisabled(true);
-        return;
+    if (title == "") {
+      setError("Please enter required details");
+      return;
     }
-  console.log(selectedNote)
-   try {
-    const response = await fetch(
+
+    if (content == "") {
+      setError("Please enter required details");
+      return;
+    }
+    try {
+      const response = await fetch(
         `http://localhost:5000/api/notes/${selectedNote.id}`,
         {
-            method:'PUT',
-            headers:{
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                title,
-                content
-            })
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title,
+            content,
+          }),
         }
-    )
-    const updatedNote = await response.json();
-    const updatedNotesList = notes.map((note) =>
-      note.id === selectedNote.id ? updatedNote : note
-    );
+      );
+      const updatedNote = await response.json();
+      const updatedNotesList = notes.map((note) =>
+        note.id === selectedNote.id ? updatedNote : note
+      );
 
-    setNotes(updatedNotesList);
-    setTitle("");
-    setContent("");
-    setSelectedNote(null);
-    fetchNotes();
-    
-   } catch (error) {
-    console.log(error);
-   }
-
-    
+      setNotes(updatedNotesList);
+      setTitle("");
+      setContent("");
+      setSelectedNote(null);
+      fetchNotes();
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const handleCancel = () => {
     setTitle("");
     setContent("");
+    setError("");
     setSelectedNote(null);
   };
 
-  const handleAddNote = async(e: React.FormEvent) => {
-    setisDisabled(true);
+  const handleAddNote = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log(title);
-    console.log(content);
-    if(title == '' || content == '' ){
-        setError("Please enter required details");
-        setisDisabled(true);
-        return;
+    if (title == "") {
+      setError("Please enter required details");
+      return;
     }
+
+    if (content == "") {
+      setError("Please enter required details");
+      return;
+    }
+
     try {
-    const response = await fetch(
-        "http://localhost:5000/api/notes/savenote",{
-            method:"POST",
-            headers:{
-              "Content-Type": "application/json"
-            },
-            body:JSON.stringify({
-                id:notes.length+1,
-                title,
-                content
-            })
-        }
-    );
-   
-    const newNote = await response.json();
-    console.log(newNote)
-    setNotes([newNote, ...notes]);
-    
-    setTitle("");
-    setContent("");
-    fetchNotes();
-    console.log('noew notes',notes)
-        
+      const response = await fetch("http://localhost:5000/api/notes/savenote", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: notes.length + 1,
+          title,
+          content,
+        }),
+      });
+
+      const newNote = await response.json();
+      setNotes([newNote, ...notes]);
+      setTitle("");
+      setContent("");
+      fetchNotes();
+      setError("");
     } catch (error) {
-        console.log(error);
+      console.log(error);
     }
-    
   };
 
-  const deleteNote = async (
-    e:React.MouseEvent,
-    noteId:number
-  )=>{
-     e.stopPropagation();
-     try {
-        const response = await fetch(
-            `http://localhost:5000/api/notes/${noteId}`,{
-                method:"DELETE"
-                
-            }
-        );
-        const updatedNotes = notes.filter((note:any)=>(note.id !== noteId));
+  const deleteNote = async (e: React.MouseEvent, noteId: number) => {
+    e.stopPropagation();
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/notes/${noteId}`,
+        {
+          method: "DELETE",
+        }
+      );
+      const updatedNotes = notes.filter((note: any) => note.id !== noteId);
+      setNotes(updatedNotes);
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
-    setNotes(updatedNotes);
-        
-     } catch (error) {
-        console.log(error);
-     }
-  
-    
-  }
+  const removeErrMsg = (e: any) => {
+    if (content !== "" && title !== "") {
+      setError("");
+    }
+  };
 
   return (
     <div className="app-container">
@@ -194,33 +165,44 @@ const AddEditNotes = (props: any) => {
         <input
           placeholder="title"
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={(e) => {
+            setTitle(e.target.value);
+            removeErrMsg(e.target.value);
+          }}
           required
         ></input>
         <textarea
           placeholder="Content"
           value={content}
-          onChange={(e) => setContent(e.target.value)}
+          onChange={(e) => {
+            setContent(e.target.value);
+            removeErrMsg(e.target.value);
+          }}
           rows={10}
           required
         ></textarea>
-
-        {selectedNote ? (
-          <div className="edit-buttons">
-            <button type="submit" onClick={handleUpdateNote}>
-              Save
-            </button>
-            <button onClick={handleCancel}>Cancel</button>
-          </div>
-        ) : (
-          <>
-            <button disabled = {isDisabled} onClick={handleAddNote}>Add Note</button>
-          </>
-        )}
-         {error && <p className='error-cls'>{error}</p>}
+        <div className="btn-container">
+          {selectedNote ? (
+            <div className="edit-buttons">
+              <button type="submit" onClick={handleUpdateNote}>
+                Save
+              </button>
+              <button onClick={handleCancel}>Cancel</button>
+            </div>
+          ) : (
+            <>
+              <button onClick={handleAddNote}>Add Note</button>
+            </>
+          )}
+          {error && <p className="error-cls">{error}</p>}
+        </div>
       </form>
 
-      <DisplayNote notes={notes} handleNoteClick={handleNoteClick} deleteNote={deleteNote}/>
+      <DisplayNote
+        notes={notes}
+        handleNoteClick={handleNoteClick}
+        deleteNote={deleteNote}
+      />
     </div>
   );
 };
